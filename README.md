@@ -40,7 +40,7 @@ Output:
 
 ```
 CitationStyle.NUMBERED [1] -> https://wikipedia.org/Paris
-CitationStyle.AUTHOR_YEAR (Smith, 2024) -> None
+CitationStyle.AUTHOR_YEAR Smith (2024) -> None
 CitationStyle.FOOTNOTE [^foo] -> Smith, A. (2024). Demographics.
 CitationStyle.URL https://example.com/source -> https://example.com/source
 ```

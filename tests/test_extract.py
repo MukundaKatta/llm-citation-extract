@@ -95,6 +95,15 @@ def test_author_year_et_al():
     assert cites[0].anchor == "Smith et al. 2024"
 
 
+def test_author_year_ampersand_separator():
+    # `&` is an accepted author separator alongside `and`.
+    r = extract_citations("Per (Smith & Jones, 2024), this works.")
+    cites = [c for c in r.citations if c.style == CitationStyle.AUTHOR_YEAR]
+    assert len(cites) == 1
+    assert cites[0].marker == "(Smith & Jones, 2024)"
+    assert cites[0].anchor == "Smith & Jones 2024"
+
+
 def test_author_year_ignores_generic_parens():
     r = extract_citations("It (see, 2024) does not match.")
     cites = [c for c in r.citations if c.style == CitationStyle.AUTHOR_YEAR]
@@ -226,11 +235,7 @@ def test_citation_in_title_position():
 
 
 def test_bibliography_combines_numbered_and_footnote():
-    text = (
-        "see [1] and [^foo]\n"
-        "[1]: https://x\n"
-        "[^foo]: a definition line\n"
-    )
+    text = "see [1] and [^foo]\n[1]: https://x\n[^foo]: a definition line\n"
     r = extract_citations(text)
     assert r.bibliography == {
         "1": "https://x",
@@ -245,11 +250,7 @@ def test_bibliography_combines_numbered_and_footnote():
 
 
 def test_clean_text_strips_inline_markers_and_definitions():
-    text = (
-        "Paris is the capital [1].\n"
-        "\n"
-        "[1]: https://wikipedia.org/Paris\n"
-    )
+    text = "Paris is the capital [1].\n\n[1]: https://wikipedia.org/Paris\n"
     r = extract_citations(text)
     # marker stripped
     assert "[1]" not in r.clean_text
@@ -313,6 +314,13 @@ def test_full_example_from_readme():
     foot = next(c for c in r.citations if c.style == CitationStyle.FOOTNOTE)
     assert numbered.target == "https://wikipedia.org/Paris"
     assert foot.target == "Smith, A. (2024). Demographics."
+    # `Per Smith (2024)` is the leading author-year form, so the marker is
+    # `Smith (2024)` (not `(Smith, 2024)`); guards the README output block.
+    author_year = next(c for c in r.citations if c.style == CitationStyle.AUTHOR_YEAR)
+    assert author_year.marker == "Smith (2024)"
+    # the `(2024)` inside the `[^foo]:` definition line must not surface as a
+    # separate author-year citation.
+    assert sum(1 for c in r.citations if c.style == CitationStyle.AUTHOR_YEAR) == 1
 
 
 # ---------- Citation type contract ----------
